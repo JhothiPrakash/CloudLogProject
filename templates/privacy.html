@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Cloud Log Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="nav-logo">
+                    <span>Cloud Log Analytics</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="{{ url_for('login') }}" class="btn btn-outline">Back to Login</a>
+                </div>
+            </nav>
+
+            <div class="privacy-content">
+                <div class="page-header">
+                    <h1>Privacy & Security Policy</h1>
+                    <p>How we protect your data</p>
+                </div>
+
+                <div class="policy-card">
+                    <h2>AWS Credentials Handling</h2>
+                    <ul>
+                        <li><strong>Session-Only Storage:</strong> Your AWS credentials are stored ONLY in encrypted session memory</li>
+                        <li><strong>Never Logged:</strong> Credentials are NEVER written to logs, databases, or files</li>
+                        <li><strong>Never Transmitted:</strong> Credentials are NEVER sent to third parties</li>
+                        <li><strong>Auto-Clear:</strong> Credentials are automatically cleared after 30 minutes of inactivity</li>
+                        <li><strong>Complete Logout:</strong> All credential data is completely destroyed on logout</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <h2>Data Privacy</h2>
+                    <ul>
+                        <li><strong>User Isolation:</strong> You can ONLY view results from your own uploads</li>
+                        <li><strong>No Data Sharing:</strong> Your log data is never shared with other users</li>
+                        <li><strong>Your AWS Resources:</strong> Files are uploaded to YOUR AWS S3 bucket using YOUR credentials</li>
+                        <li><strong>No Third Parties:</strong> This application uses NO external services, CDNs, or analytics</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <h2>Security Measures</h2>
+                    <ul>
+                        <li><strong>CSRF Protection:</strong> All forms are protected against cross-site request forgery</li>
+                        <li><strong>Rate Limiting:</strong> Protection against brute-force attacks</li>
+                        <li><strong>Session Fingerprinting:</strong> Detection of session hijacking attempts</li>
+                        <li><strong>Input Sanitization:</strong> All inputs are validated and sanitized</li>
+                        <li><strong>Security Headers:</strong> Comprehensive HTTP security headers on all responses</li>
+                        <li><strong>No External Resources:</strong> All assets are served locally - no CDNs or external fonts</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <h2>Your Responsibilities</h2>
+                    <ul>
+                        <li>Keep your AWS credentials secure and private</li>
+                        <li>Use credentials with minimal required permissions</li>
+                        <li>Only upload log files you are authorized to analyze</li>
+                        <li>Log out when finished to clear your credentials</li>
+                        <li>Do not share your session with others</li>
+                    </ul>
+                </div>
+
+                <div class="policy-card">
+                    <h2>Contact</h2>
+                    <p>For security concerns, please contact your system administrator.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 Cloud Log Analytics. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

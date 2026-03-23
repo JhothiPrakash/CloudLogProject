@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History -LOG InFo DECODER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="nav-logo">
+                    <span>LOG InFo DECODER</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-logout">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+
+            <div class="history-content">
+                <div class="page-header">
+                    <h1>Upload History</h1>
+                    <p>Your uploads from this session only</p>
+                </div>
+
+                <div class="session-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>History is cleared when you logout. Only your uploads are shown.</span>
+                </div>
+
+                {% if uploaded_files %}
+                <div class="history-list">
+                    {% for file in uploaded_files %}
+                    <div class="history-item">
+                        <div class="history-item-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                        <div class="history-item-info">
+                            <h4>{{ file.original_name }}</h4>
+                            <p>
+                                <span class="tag">{{ file.log_type }}</span>
+                                <span class="time">{{ file.upload_time[:16].replace('T', ' ') }}</span>
+                            </p>
+                        </div>
+                        <a href="{{ url_for('view_result', filename=file.filename) }}" class="btn btn-outline btn-sm">
+                            View Results
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    <h3>No uploads yet</h3>
+                    <p>Upload a log file to see it here</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Upload Now</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 Cloud Log Analytics. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

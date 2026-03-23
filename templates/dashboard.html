@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - LOG InFo DECODER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="nav-logo">
+                    <span>LOG InFo DECODER</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="{{ url_for('history') }}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        History
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-logout">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Secure Logout
+                    </a>
+                </div>
+            </nav>
+
+            <div class="dashboard-content">
+                <div class="page-header">
+                    <h1>Upload Log File</h1>
+                    <p>Securely upload your log file for analysis</p>
+                </div>
+
+                <!-- Session Info -->
+                <div class="session-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <span>Secure session active. Your uploads are private to this session only.</span>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <div class="card upload-card">
+                    <form method="POST" action="{{ url_for('dashboard') }}" enctype="multipart/form-data" id="uploadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        
+                        <div class="upload-zone" id="dropZone">
+                            <div class="upload-icon">
+                                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                            </div>
+                            <p class="upload-text">Drag and drop your log file here</p>
+                            <p class="upload-subtext">or click to browse (.log, .txt files only)</p>
+                            <input type="file" id="logfile" name="logfile" accept=".log,.txt" required hidden>
+                            <p class="file-name" id="fileName"></p>
+                        </div>
+
+                        <div class="form-group log-type-group">
+                            <label>Log Type</label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="log_type" value="system" checked>
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>System Log</strong>
+                                        <small>OS events, authentication, services</small>
+                                    </span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="log_type" value="server">
+                                    <span class="radio-custom"></span>
+                                    <span class="radio-text">
+                                        <strong>Server Log</strong>
+                                        <small>Web server, application, access logs</small>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <path d="m21 21-4.35-4.35"/>
+                            </svg>
+                            Analyze Log
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Your Uploads -->
+                {% if uploaded_files %}
+                <div class="uploads-section">
+                    <h3>Your Uploads (This Session)</h3>
+                    <div class="uploads-list">
+                        {% for file in uploaded_files %}
+                        <div class="upload-item">
+                            <div class="upload-item-info">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                </svg>
+                                <span>{{ file.original_name }}</span>
+                                <span class="upload-type">{{ file.log_type }}</span>
+                            </div>
+                            <a href="{{ url_for('view_result', filename=file.filename) }}" class="btn btn-sm">View Results</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="info-grid">
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                        <h3>Supported Formats</h3>
+                        <p>.log and .txt files only</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3>Private Analysis</h3>
+                        <p>Only you see your results</p>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                            </svg>
+                        </div>
+                        <h3>Fast Processing</h3>
+                        <p>Results in seconds</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 Cloud Log Analytics. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('logfile');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+
+        dropZone.addEventListener('click', function() { fileInput.click(); });
+
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fileName.textContent = e.target.files[0].name;
+                dropZone.classList.add('has-file');
+            }
+        });
+
+        dropZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            var files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileName.textContent = files[0].name;
+                dropZone.classList.add('has-file');
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function() {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+        });
+    </script>
+</body>
+</html>

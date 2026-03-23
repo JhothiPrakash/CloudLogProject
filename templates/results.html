@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - Cloud Log Analytics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+    {% if not results %}
+    <meta http-equiv="refresh" content="3">
+    {% endif %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="nav-logo">
+                    <span>Cloud Log Analytics</span>
+                </div>
+                <div class="nav-actions">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"/>
+                            <polyline points="12 19 5 12 12 5"/>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-logout">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+
+            <div class="results-content">
+                <div class="page-header">
+                    <h1>Analysis Results</h1>
+                    <p class="filename">{{ filename }}</p>
+                </div>
+
+                {% if results %}
+                <div class="results-grid">
+                    <div class="result-card error-card">
+                        <div class="card-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                <line x1="9" y1="9" x2="15" y2="15"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value">{{ results.errors }}</span>
+                            <span class="card-label">Errors</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card warning-card">
+                        <div class="card-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value">{{ results.warnings }}</span>
+                            <span class="card-label">Warnings</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card ip-card">
+                        <div class="card-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                                <line x1="6" y1="6" x2="6.01" y2="6"/>
+                                <line x1="6" y1="18" x2="6.01" y2="18"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value">{{ results.unique_ips }}</span>
+                            <span class="card-label">Unique IPs</span>
+                        </div>
+                    </div>
+
+                    <div class="result-card frequent-card">
+                        <div class="card-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                            </svg>
+                        </div>
+                        <div class="card-content">
+                            <span class="card-value ip-value">{{ results.most_frequent_ip }}</span>
+                            <span class="card-label">Most Frequent IP</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-section">
+                    <div class="detail-card">
+                        <h3>Analysis Details</h3>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <span class="detail-label">Total Lines</span>
+                                <span class="detail-value">{{ results.total_lines }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Log Type</span>
+                                <span class="detail-value">{{ results.log_type | capitalize }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Analyzed At</span>
+                                <span class="detail-value">{{ results.timestamp }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if results.error_messages %}
+                    <div class="detail-card">
+                        <h3>Sample Errors</h3>
+                        <ul class="error-list">
+                            {% for error in results.error_messages %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if results.ip_list %}
+                    <div class="detail-card">
+                        <h3>Detected IPs</h3>
+                        <div class="ip-chips">
+                            {% for ip in results.ip_list %}
+                            <span class="ip-chip">{{ ip }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="action-buttons">
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Upload Another
+                    </a>
+                </div>
+
+                {% else %}
+                <div class="loading-state">
+                    <div class="loading-spinner">
+                        <svg width="80" height="80" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="#e5e5e5" stroke-width="2" fill="none"/>
+                            <circle cx="12" cy="12" r="10" stroke="#1d1d1f" stroke-width="2" fill="none" 
+                                    stroke-dasharray="60" stroke-dashoffset="20" class="spinner-circle"/>
+                        </svg>
+                    </div>
+                    <h2>Analyzing Your Log</h2>
+                    <p>{{ message if message else "Processing..." }}</p>
+                    <p class="loading-hint">Page will refresh automatically</p>
+                    
+                    <a href="{{ url_for('results') }}" class="btn btn-outline refresh-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                        </svg>
+                        Refresh
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 Cloud Log Analytics. Your data is private.</p>
+        </footer>
+    </div>
+</body>
+</html>

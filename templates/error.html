@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error {{ error_code }} - LOG InFo DECODER</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+</head>
+<body>
+    <div class="page-wrapper">
+        <div class="container">
+            <div class="error-page">
+                <div class="error-icon">
+                    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <h1>Error {{ error_code }}</h1>
+                <p>{{ error_message }}</p>
+                <a href="{{ url_for('login') }}" class="btn btn-primary">Go to Login</a>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; 2026 LOG InFo DECODER. All rights reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>
