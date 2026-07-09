@@ -1,0 +1,9 @@
+title: Web Application Brute Force
+id: b2cd34ef-56a7-8901-cdef-g234567890bc
+description: Detects frequent unauthorized HTTP responses or server error clusters from a single host.
+severity: MEDIUM
+detection:
+  service: nginx
+  keywords:
+    - "401 Unauthorized"
+    - "403 Forbidden"

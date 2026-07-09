@@ -1,0 +1,8 @@
+title: Unauthorized Privilege Escalation
+id: c3de45fg-67b8-9012-defg-h345678901cd
+description: Detects unauthorized usage of the sudo command or administrative transitions.
+severity: CRITICAL
+detection:
+  keywords:
+    - "sudo: auth failure"
+    - "unauthorized privilege changes"

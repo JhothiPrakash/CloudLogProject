@@ -21,6 +21,7 @@ import uuid
 import gzip
 import hashlib
 import secrets
+import threading
 from datetime import datetime, timedelta
 from functools import wraps
 from collections import defaultdict
@@ -37,6 +38,10 @@ from flask import (
     abort,
     make_response
 )
+from werkzeug.utils import secure_filename
+
+from analysis_engine.job_manager import JobManager
+from analysis_engine.report_builder import ReportBuilder
 
 from aws_utils import (
     validate_aws_credentials,
@@ -45,8 +50,8 @@ from aws_utils import (
 )
 
 # ============== CONFIGURATION ==============
-S3_BUCKET_NAME = "your-s3-bucket-name"  # Configure this
-DYNAMODB_TABLE = ""
+S3_BUCKET_NAME = os.environ.get('S3_BUCKET_NAME', '').strip()
+DYNAMODB_TABLE = os.environ.get('DYNAMODB_TABLE', 'LogAnalysis').strip()
 
 # Security Configuration
 MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max
@@ -69,6 +74,11 @@ app.config.update(
 )
 
 rate_limit_storage = defaultdict(list)
+
+# ============== VERSION 2 ENGINE INITIALIZATION ==============
+
+job_mgr = JobManager()
+report_builder = ReportBuilder()
 
 
 # ============== SECURITY MIDDLEWARE ==============
@@ -203,6 +213,37 @@ def generate_unique_filename(original_filename: str, session_id: str) -> str:
     return f"{base_name}_{timestamp}_{session_hash}_{short_uuid}.log.gz"
 
 
+def analyze_log_content(file_content: bytes, log_type: str, filename: str) -> dict:
+    """Build a local analysis summary from the uploaded log file."""
+    text = file_content.decode('utf-8', errors='ignore')
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+
+    error_lines = [line for line in lines if re.search(r'\berror\b', line, re.IGNORECASE)]
+    warning_lines = [line for line in lines if re.search(r'\bwarn(ing)?\b', line, re.IGNORECASE)]
+    ip_matches = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}\b', text)
+
+    ip_counts = defaultdict(int)
+    for ip in ip_matches:
+        ip_counts[ip] += 1
+
+    most_frequent_ip = 'N/A'
+    if ip_counts:
+        most_frequent_ip = max(ip_counts, key=ip_counts.get)
+
+    return {
+        'filename': filename,
+        'errors': len(error_lines),
+        'warnings': len(warning_lines),
+        'unique_ips': len(set(ip_matches)),
+        'most_frequent_ip': most_frequent_ip,
+        'total_lines': len(lines),
+        'timestamp': datetime.now().isoformat(timespec='seconds'),
+        'log_type': log_type,
+        'ip_list': list(dict.fromkeys(ip_matches))[:25],
+        'error_messages': error_lines[:5],
+    }
+
+
 # ============== ROUTES ==============
 
 @app.route('/', methods=['GET', 'POST'])
@@ -278,6 +319,9 @@ def login():
 def dashboard():
     """Secure dashboard for file uploads."""
     if request.method == 'POST':
+        job_id = None
+        temp_filepath = None
+
         if check_rate_limit(f"upload_{session.get('session_id')}", MAX_UPLOAD_ATTEMPTS, RATE_LIMIT_WINDOW):
             flash('Too many upload attempts. Please wait.', 'error')
             return render_template('dashboard.html', 
@@ -319,6 +363,8 @@ def dashboard():
                 return render_template('dashboard.html', 
                                      csrf_token=session.get('csrf_token'),
                                      uploaded_files=session.get('uploaded_files', []))
+
+            local_results = analyze_log_content(file_content, log_type, safe_filename)
             
             file_hash = calculate_file_hash(file_content)
             
@@ -328,20 +374,34 @@ def dashboard():
                 return render_template('dashboard.html', 
                                      csrf_token=session.get('csrf_token'),
                                      uploaded_files=session.get('uploaded_files', []))
+
+            # Version 2 needs a secure on-disk copy of the uploaded file so the
+            # parser and report builder can work from an isolated job workspace.
+            job_id = job_mgr.generate_job_id()
+            workspace_path = job_mgr.initialize_workspace(job_id)
+
+            uploaded_name = secure_filename(file.filename) or f"{job_id}.log"
+            temp_filepath = os.path.join(workspace_path, uploaded_name)
+            with open(temp_filepath, 'wb') as temp_file:
+                temp_file.write(file_content)
             
             unique_filename = generate_unique_filename(safe_filename, session.get('session_id', ''))
             compressed_content = compress_content(file_content)
+
+            upload_message = 'Local analysis generated.'
+            upload_success = False
             
-            success, message = upload_file_to_s3(
-                session=session,
-                file_content=compressed_content,
-                bucket_name=S3_BUCKET_NAME,
-                s3_key=unique_filename,
-                file_hash=file_hash,
-                log_type=log_type
-            )
-            
-            if success:
+            if S3_BUCKET_NAME:
+                upload_success, upload_message = upload_file_to_s3(
+                    session=session,
+                    file_content=compressed_content,
+                    bucket_name=S3_BUCKET_NAME,
+                    s3_key=unique_filename,
+                    file_hash=file_hash,
+                    log_type=log_type
+                )
+
+            if upload_success:
                 uploaded_hashes.append(file_hash)
                 session['uploaded_hashes'] = uploaded_hashes
                 
@@ -354,14 +414,55 @@ def dashboard():
                 })
                 session['uploaded_files'] = uploaded_files
                 session['last_uploaded_file'] = unique_filename
+                session['analysis_results'] = local_results
+                session['analysis_filename'] = unique_filename
+                session['analysis_mode'] = 'aws'
                 
                 flash('File uploaded successfully! Analyzing...', 'success')
-                return redirect(url_for('results'))
             else:
-                flash('Upload failed. Please try again.', 'error')
+                uploaded_files = session.get('uploaded_files', [])
+                uploaded_files.append({
+                    'filename': unique_filename,
+                    'original_name': safe_filename,
+                    'upload_time': datetime.now().isoformat(),
+                    'log_type': log_type
+                })
+                session['uploaded_files'] = uploaded_files
+                session['last_uploaded_file'] = unique_filename
+                session['analysis_results'] = local_results
+                session['analysis_filename'] = unique_filename
+                session['analysis_mode'] = 'local'
+
+                if S3_BUCKET_NAME:
+                    flash(f'AWS upload unavailable: {upload_message}. Showing local analysis instead.', 'warning')
+                else:
+                    flash('AWS storage is not configured. Showing local analysis instead.', 'warning')
+
+            # Version 2 runs after the AWS/DynamoDB path so the legacy pipeline
+            # remains intact and the new unified dashboard can be shown when it
+            # succeeds.
+            try:
+                report = report_builder.generate_master_report(job_id, temp_filepath)
+                session['analysis_report'] = report
+                session['analysis_job_id'] = job_id
+                return render_template('analysis.html', report=report)
+            except Exception as version2_error:
+                flash(
+                    f'Advanced analysis unavailable: {version2_error}. Showing Version 1 results instead.',
+                    'warning'
+                )
+                return redirect(url_for('results'))
                 
         except Exception:
             flash('Error processing file.', 'error')
+        finally:
+            if job_id:
+                cleanup_thread = threading.Thread(
+                    target=job_mgr.cleanup_workspace,
+                    args=(job_id,),
+                    daemon=True
+                )
+                cleanup_thread.start()
     
     return render_template('dashboard.html', 
                          csrf_token=session.get('csrf_token'),
@@ -384,6 +485,14 @@ def results():
     if filename not in user_filenames:
         flash('Access denied.', 'error')
         return redirect(url_for('dashboard'))
+
+    if session.get('analysis_filename') == filename and session.get('analysis_results'):
+        return render_template(
+            'results.html',
+            results=session.get('analysis_results'),
+            filename=filename,
+            csrf_token=session.get('csrf_token')
+        )
     
     success, data = get_analysis_results(
         session=session,
@@ -397,6 +506,15 @@ def results():
                              filename=filename,
                              csrf_token=session.get('csrf_token'))
     else:
+        local_results = session.get('analysis_results')
+        if local_results and session.get('analysis_filename') == filename:
+            return render_template(
+                'results.html',
+                results=local_results,
+                filename=filename,
+                csrf_token=session.get('csrf_token')
+            )
+
         return render_template('results.html', 
                              results=None, 
                              filename=filename,

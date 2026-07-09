@@ -1,0 +1,10 @@
+title: Multiple Failed SSH Logins
+id: a1bc23de-45f6-7890-bcde-f123456789ab
+description: Detects multiple failed password attempts over SSH indicating a potential brute force attack.
+severity: HIGH
+detection:
+  service: ssh
+  event: failed_login
+  keywords:
+    - "failed password"
+    - "authentication failure"

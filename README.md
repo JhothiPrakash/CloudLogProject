@@ -1,147 +1,250 @@
-# Cloud Log Analytics - Secure Flask Application
+# Cloud Log Analytics
 
-A secure, privacy-focused Flask web application for analyzing AWS CloudWatch logs with minimal dependencies and strong security measures.
+A secure Flask web application for analyzing cloud logs with AWS integration. This application allows users to securely upload and analyze log files stored in AWS S3 with integrated analytics and reporting.
 
-## Features
+## 🔒 Security Features
 
-✅ **Security-First Design**
-- AWS credentials stored ONLY in encrypted session memory (never logged or persisted to disk)
-- CSRF protection on all forms
-- Security headers on all responses
-- Rate limiting to prevent brute force attacks
-- Input validation and sanitization
-- User consent required before credential submission
+- **AWS Credentials Protection**: Credentials stored only in encrypted session memory, never logged or persisted
+- **CSRF Protection**: Cross-Site Request Forgery protection on all forms
+- **Security Headers**: Comprehensive security headers on all HTTP responses
+- **Rate Limiting**: Protection against brute force attacks
+- **Session Management**: Automatic session timeout after 30 minutes of inactivity
+- **Input Validation**: All user inputs are validated and sanitized
+- **User Isolation**: Users can only access their own uploaded results
+- **File Upload Restrictions**: Limited file types (.log, .txt) and max size (50MB)
 
-✅ **Core Functionality**
-- Upload and analyze AWS CloudWatch logs
-- Secure S3 file uploads with metadata
-- Log analysis and results dashboard
-- User authentication and session management
-- Privacy-focused design with automatic session cleanup
+## 📋 Prerequisites
 
-## Project Structure
+- Python 3.8 or higher
+- pip (Python package manager)
+- AWS Account with S3 and DynamoDB access
+- Git (for version control)
 
-```
-CloudLogProject/
-├── app.py                  # Main Flask application
-├── aws_utils.py           # AWS boto3 utilities
-├── uploader.py            # File upload handlers
-├── requirements.txt       # Python dependencies
-├── static/                # CSS and static assets
-│   └── style.css
-├── templates/             # HTML templates
-│   ├── dashboard.html
-│   ├── login.html
-│   ├── results.html
-│   └── ...
-├── logs/                  # Application logs directory
-└── Cloudlogprojects/      # User project data
-```
-
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/JhothiPrakash/CloudLogProject.git
 cd CloudLogProject
 ```
 
-### 2. Create Virtual Environment
+### 2. Create a Virtual Environment
+
+**On Windows:**
 ```bash
-# Windows
 python -m venv venv
 venv\Scripts\activate
+```
 
-# Linux/Mac
-python -m venv venv
+**On macOS/Linux:**
+```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Configure AWS (Optional)
-The application uses session-based AWS credentials. You can provide credentials through the web interface when needed.
+### 4. Configure AWS Credentials
 
-### 5. Run the Application
+The application accepts AWS credentials through the web interface. **Do not store credentials in files or environment variables for security reasons.**
+
+**Option A: Use AWS Credentials in Web Interface (Recommended)**
+- Start the application and enter your AWS credentials through the login page
+- Credentials are stored only in encrypted session memory
+
+**Option B: Set Environment Variables (Development Only)**
+```bash
+# Windows
+set AWS_ACCESS_KEY_ID=your_access_key
+set AWS_SECRET_ACCESS_KEY=your_secret_key
+set AWS_DEFAULT_REGION=us-east-1
+
+# macOS/Linux
+export AWS_ACCESS_KEY_ID=your_access_key
+export AWS_SECRET_ACCESS_KEY=your_secret_key
+export AWS_DEFAULT_REGION=us-east-1
+```
+
+### 5. Configure Application Settings
+
+Edit `app.py` and update these settings:
+
+```python
+S3_BUCKET_NAME = "your-s3-bucket-name"  # Your S3 bucket name
+DYNAMODB_TABLE = "your-table-name"       # Your DynamoDB table name (optional)
+```
+
+### 6. Run the Application
+
 ```bash
 python app.py
 ```
 
 The application will start on `http://localhost:5000`
 
-## Usage
+## 📁 Project Structure
 
-1. **Login**: Access the login page at `/login`
-2. **Submit AWS Credentials**: Provide your AWS access key, secret key, and region
-3. **Upload Logs**: Upload CloudWatch logs files for analysis
-4. **View Results**: Access your analysis results on the dashboard
-
-## Security Warnings ⚠️
-
-- **Never share AWS credentials** in code or version control
-- **Use IAM roles** when running on AWS infrastructure
-- **Rotate credentials** regularly
-- **Use HTTPS** in production environments
-- **Enable rate limiting** in production
-- **Set strong passwords** for user accounts
-
-## Configuration
-
-### S3 Bucket Name
-Edit `app.py` and update:
-```python
-S3_BUCKET_NAME = "your-s3-bucket-name"  # Configure this
+```
+CloudLogProject/
+├── app.py                 # Main Flask application
+├── aws_utils.py          # AWS S3 and credential utilities
+├── uploader.py           # File upload handling
+├── requirements.txt      # Python dependencies
+├── README.md             # This file
+├── templates/            # HTML templates
+│   ├── login.html
+│   ├── dashboard.html
+│   ├── results.html
+│   ├── history.html
+│   ├── error.html
+│   └── privacy.html
+├── static/              # Static files
+│   └── style.css
+└── logs/                # Application logs directory
 ```
 
-### DynamoDB Table (Optional)
-```python
-DYNAMODB_TABLE = "your-dynamodb-table"
-```
+## 🔑 Key Features
 
-## Dependencies
+### User Authentication
+- Secure login system with session management
+- Automatic session timeout for security
+- User consent before credential submission
 
-- Flask >= 2.3.0 - Web framework
-- boto3 >= 1.28.0 - AWS SDK for Python
+### Log Upload and Analysis
+- Support for `.log` and `.txt` file formats
+- Max file size: 50MB
+- Automatic log analysis and insights
+- Results stored in user-specific sessions
 
-See `requirements.txt` for complete list.
+### Dashboard
+- View upload history
+- Access analysis results
+- Download processed logs
+- View privacy information
 
-## Troubleshooting
+## ⚙️ Configuration Options
 
-### ModuleNotFoundError
-Make sure your virtual environment is activated and dependencies are installed:
+Edit `app.py` to customize:
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| `MAX_CONTENT_LENGTH` | 50MB | Maximum file upload size |
+| `SESSION_TIMEOUT` | 1800s | Session expiration time |
+| `RATE_LIMIT_WINDOW` | 300s | Rate limiting window |
+| `MAX_LOGIN_ATTEMPTS` | 5 | Failed login attempts before lockout |
+| `MAX_UPLOAD_ATTEMPTS` | 20 | Upload rate limit |
+
+## 🛡️ Environment Variables (Optional)
+
 ```bash
-pip install -r requirements.txt
+FLASK_SECRET_KEY       # Flask session encryption key (auto-generated if not set)
+FLASK_ENV             # Set to 'production' for production deployment
+AWS_REGION            # Default AWS region
 ```
 
-### AWS Credential Errors
-1. Verify your AWS credentials are correct
-2. Check that your IAM user has appropriate S3 permissions
-3. Ensure the S3 bucket name is configured in `app.py`
+## 📝 Usage Example
+
+1. **Login**: Navigate to `http://localhost:5000` and login with your AWS credentials
+2. **Upload Log**: Click "Upload Log File" and select a `.log` or `.txt` file
+3. **View Results**: Browse analysis results in the dashboard
+4. **Download**: Download processed logs if available
+5. **Logout**: Click logout to clear all session data
+
+## 🧪 Testing
+
+To test credential validation:
+```python
+python -c "from aws_utils import validate_aws_credentials; \
+validate_aws_credentials('YOUR_KEY', 'YOUR_SECRET', 'us-east-1')"
+```
+
+## 📚 API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/` | GET | Dashboard (redirects to login if not authenticated) |
+| `/login` | GET, POST | User login page |
+| `/logout` | GET | Clear session and logout |
+| `/upload` | POST | Upload log file |
+| `/results` | GET | View analysis results |
+| `/history` | GET | View upload history |
+| `/privacy` | GET | Privacy information |
+
+## 🚨 Security Notes
+
+### Development vs Production
+
+**Development:**
+- Uses `SESSION_COOKIE_SECURE=False` (works over HTTP)
+- Auto-generated secret key
+
+**Production:**
+- Set `SESSION_COOKIE_SECURE=True` (HTTPS only)
+- Set strong `FLASK_SECRET_KEY` environment variable
+- Deploy behind HTTPS reverse proxy
+- Disable debug mode
+- Use environment variables for sensitive configs
+
+### Credentials Best Practices
+
+✅ **DO:**
+- Use the web interface to enter credentials
+- Rotate AWS access keys regularly
+- Use IAM roles with minimal permissions
+- Enable MFA on AWS account
+- Use temporary security credentials when possible
+
+❌ **DON'T:**
+- Store credentials in source code
+- Commit `.env` files with credentials
+- Log or print credentials
+- Share credentials via insecure channels
+
+## 🐛 Troubleshooting
 
 ### Port Already in Use
-If port 5000 is in use, modify the port in `app.py`:
-```python
-app.run(debug=True, port=5001)
+```bash
+# Windows
+netstat -ano | findstr :5000
+
+# macOS/Linux
+lsof -i :5000
 ```
 
-## Privacy & Data Handling
+### AWS Credentials Invalid
+- Verify credentials in AWS Console
+- Check IAM user permissions (S3, DynamoDB)
+- Ensure credentials haven't expired
 
-- User sessions are cleared on logout
-- AWS credentials are never persisted to disk
-- All uploads are secured with metadata
-- Access is user-specific and isolated
+### File Upload Failed
+- Check file format (.log or .txt only)
+- Verify file size < 50MB
+- Check S3 bucket permissions
 
-## License
+### Session Expired
+- Log in again
+- Session times out after 30 minutes of inactivity
+- Credentials are cleared on logout
 
-This project is provided as-is for educational and professional use.
+## 📄 License
 
-## Support
+This project is provided as-is for educational and business purposes.
 
-For issues or questions, please check the application logs in the `logs/` directory.
+## 📧 Support
+
+For issues or questions, please open an issue on GitHub or contact the project maintainer.
+
+## 🔄 Version History
+
+- **v1.0** - Initial release with secure credential handling and log analysis
 
 ---
 
 **Last Updated**: March 2026
+
+Made with ❤️ by Jothi Prakash

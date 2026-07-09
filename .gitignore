@@ -2,7 +2,7 @@
 venv/
 env/
 ENV/
-.venv
+*.venv
 
 # Python
 __pycache__/
@@ -25,10 +25,9 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
-# Flask
-instance/
-.webassets-cache
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
 
 # IDE
 .vscode/
@@ -38,19 +37,38 @@ instance/
 *~
 .DS_Store
 
-# Environment Variables
+# Logs
+logs/
+*.log
+logsserver.log.txt
+
+# Local environment variables
 .env
 .env.local
 .env.*.local
 
-# Logs
-*.log
-logsserver.log.txt
-
-# AWS Credentials (SECURITY CRITICAL)
-.aws/credentials
-.aws/config
-
-# Project-specific
-logs/
+# Credentials and sensitive data
+*.key
+*.pem
+*.p12
 hashes.txt
+
+# Session data
+flask_session/
+
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+
+# OS files
+thumbs.db
+.Thumbs.db
+
+# Project specific
+instance/
+.webassets-cache
+
+# Cloudlogprojects temporary files (keep directory but exclude contents if needed)
+Cloudlogprojects/*
+!Cloudlogprojects/.gitkeep
